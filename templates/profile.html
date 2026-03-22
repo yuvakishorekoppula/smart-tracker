@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+
+{% block page_title %}My Profile{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <div class="profile-layout grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        <!-- Left Column: Avatar & Basic Info -->
+        <div class="profile-sidebar col-span-1">
+            <div class="glass-panel text-center" style="padding: 30px 20px;">
+                <div class="avatar-wrapper mb-4" style="position: relative; display: inline-block;">
+                    {% if user.profile_picture and user.profile_picture != 'default_avatar.png' %}
+                        <img id="avatar-preview" src="{{ url_for('static', filename='uploads/profiles/' + user.profile_picture) }}" alt="Profile" class="profile-avatar" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 4px solid var(--primary-color);">
+                    {% else %}
+                        <div id="avatar-preview" class="profile-avatar placeholder" style="width: 120px; height: 120px; border-radius: 50%; background: var(--primary-color); color: white; display: flex; align-items: center; justify-content: center; font-size: 3rem; margin: 0 auto; border: 4px solid transparent;">
+                            <i class="fa-solid fa-user"></i>
+                        </div>
+                    {% endif %}
+                    
+                    <form action="{{ url_for('upload_avatar') }}" method="POST" enctype="multipart/form-data" id="avatar-form">
+                        <label for="avatar-upload" class="edit-avatar-btn" style="position: absolute; bottom: 0; right: 0; background: var(--primary); color: white; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid var(--card-bg); transition: transform 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
+                            <i class="fa-solid fa-camera"></i>
+                            <input type="file" id="avatar-upload" name="avatar" accept="image/*" style="display: none;" onchange="this.form.submit()">
+                        </label>
+                    </form>
+                </div>
+                
+                <h3 class="profile-name" style="margin: 10px 0 5px; font-size: 1.5rem;">{{ user.name }}</h3>
+                <p class="profile-email" style="color: var(--text-muted); margin: 0; font-size: 0.95rem;"><i class="fa-regular fa-envelope"></i> {{ user.email }}</p>
+                
+                <!-- Quick Toggle Dark Mode -->
+                <div class="dark-mode-toggle-card" style="margin-top: 25px; padding-top: 20px; border-top: 1px solid var(--card-border);">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: 500;"><i class="fa-solid fa-moon"></i> Dark Mode</span>
+                        <label class="switch">
+                            <input type="checkbox" id="profile-dark-mode-toggle">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Danger Zone -->
+            <div class="glass-panel mt-4" style="border: 1px solid #e74c3c; padding: 20px;">
+                <h4 style="color: #e74c3c; margin-top: 0; font-size: 1.1rem;"><i class="fa-solid fa-triangle-exclamation"></i> Danger Zone</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">Once you delete your account, there is no going back. Please be certain.</p>
+                <form action="{{ url_for('delete_account') }}" method="POST" onsubmit="return confirm('Are you sure you want to permanently delete your account? This action cannot be undone.');">
+                    <button type="submit" class="btn btn-danger w-100" style="background: rgba(231, 76, 60, 0.1); color: #e74c3c; border: 1px solid #e74c3c;">Delete Account</button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Right Column: Forms & Activity -->
+        <div class="profile-content col-span-2" style="grid-column: span 2;">
+            <div class="glass-panel mb-4 styled-form" style="padding: 24px;">
+                <h3 style="margin-top: 0; border-bottom: 1px solid var(--card-border); padding-bottom: 15px; margin-bottom: 20px; font-size: 1.25rem;"><i class="fa-solid fa-user-pen text-primary"></i> Update Information</h3>
+                <form action="{{ url_for('profile') }}" method="POST" id="profile-info-form">
+                    <div class="form-group mb-3">
+                        <label for="name">Full Name</label>
+                        <div class="input-with-icon">
+                            <i class="fa-regular fa-user"></i>
+                            <input type="text" id="name" name="name" class="form-control" value="{{ user.name }}" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group mb-3">
+                        <label for="phone">Phone Number</label>
+                        <div class="input-with-icon">
+                            <i class="fa-solid fa-phone"></i>
+                            <input type="tel" id="phone" name="phone" class="form-control" value="{{ user.phone }}" required pattern="[0-9]{10}" title="Must be a 10-digit number">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group mb-4">
+                        <label for="email">Email Address <span style="font-size: 0.8rem; color: var(--text-muted);">(Cannot be changed)</span></label>
+                        <div class="input-with-icon">
+                            <i class="fa-regular fa-envelope"></i>
+                            <input type="email" id="email" name="email" class="form-control" value="{{ user.email }}" disabled style="background: rgba(128,128,128,0.1); cursor: not-allowed; opacity: 0.7;">
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary" id="save-profile-btn">
+                        <span>Save Changes</span>
+                    </button>
+                </form>
+            </div>
+            
+            <div class="glass-panel mb-4 styled-form" style="padding: 24px;">
+                <h3 style="margin-top: 0; border-bottom: 1px solid var(--card-border); padding-bottom: 15px; margin-bottom: 20px; font-size: 1.25rem;"><i class="fa-solid fa-lock text-primary"></i> Change Password</h3>
+                <form action="{{ url_for('update_password') }}" method="POST" id="password-form">
+                    <div class="form-group mb-3">
+                        <label for="old_password">Current Password</label>
+                        <div class="input-with-icon">
+                            <i class="fa-solid fa-key"></i>
+                            <input type="password" id="old_password" name="old_password" class="form-control" required placeholder="Enter current password">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group mb-3">
+                        <label for="new_password">New Password</label>
+                        <div class="input-with-icon">
+                            <i class="fa-solid fa-lock"></i>
+                            <input type="password" id="new_password" name="new_password" class="form-control" required placeholder="Enter new password" minlength="6">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group mb-4">
+                        <label for="confirm_password">Confirm New Password</label>
+                        <div class="input-with-icon">
+                            <i class="fa-solid fa-check-circle"></i>
+                            <input type="password" id="confirm_password" name="confirm_password" class="form-control" required placeholder="Confirm new password" minlength="6">
+                        </div>
+                        <small id="password-error" style="color: #e74c3c; display: none; margin-top: 5px;">Passwords do not match</small>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary" id="save-password-btn">
+                        <span>Update Password</span>
+                    </button>
+                </form>
+            </div>
+            
+            <div class="glass-panel" style="padding: 24px;">
+                <h3 style="margin-top: 0; border-bottom: 1px solid var(--card-border); padding-bottom: 15px; margin-bottom: 20px; font-size: 1.25rem;"><i class="fa-solid fa-clock-rotate-left text-primary"></i> Recent Activity</h3>
+                
+                {% if logs %}
+                <div class="activity-timeline">
+                    {% for log in logs %}
+                    <div class="timeline-item" style="position: relative; padding-left: 20px; border-left: 2px solid var(--primary); margin-bottom: 15px; padding-bottom: 10px;">
+                        <span class="timeline-dot" style="position: absolute; left: -6px; top: 0; width: 10px; height: 10px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 8px var(--primary-glow);"></span>
+                        <p class="timeline-action" style="margin: 0; font-weight: 500; color: var(--text-color);">{{ log.action }}</p>
+                        <small class="timeline-date" style="color: var(--text-muted);">{{ log.created_at.strftime('%b %d, %Y %I:%M %p') }}</small>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p style="color: var(--text-muted); text-align: center; padding: 20px 0;">No recent activity found.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+<style>
+/* Addition CSS for Profile Page specific elements */
+.grid { display: grid; }
+@media (min-width: 768px) {
+    .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+    .md\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+.col-span-1 { grid-column: span 1 / span 1; }
+.gap-6 { gap: 1.5rem; }
+.mt-4 { margin-top: 1rem; }
+.mb-4 { margin-bottom: 1rem; }
+.w-100 { width: 100%; }
+
+.edit-avatar-btn:hover {
+    transform: scale(1.1);
+}
+
+.timeline-item:last-child {
+    border-left-color: transparent;
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Password match validation
+    document.getElementById('password-form').addEventListener('submit', function(e) {
+        var newPwd = document.getElementById('new_password').value;
+        var confirmPwd = document.getElementById('confirm_password').value;
+        
+        if (newPwd !== confirmPwd) {
+            e.preventDefault();
+            document.getElementById('password-error').style.display = 'block';
+        } else {
+            document.getElementById('password-error').style.display = 'none';
+        }
+    });
+    
+    // Add loading state to Save Buttons
+    document.getElementById('profile-info-form').addEventListener('submit', function() {
+        var btn = document.getElementById('save-profile-btn');
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+        btn.disabled = true;
+    });
+
+    // Handle Profile Page Dark Mode Toggle Checkbox Sync
+    var profileThemeToggle = document.getElementById('profile-dark-mode-toggle');
+    if (document.body.classList.contains('dark-theme')) {
+        profileThemeToggle.checked = true;
+    }
+    
+    profileThemeToggle.addEventListener('change', function() {
+        if(this.checked) {
+            document.body.classList.add('dark-theme');
+            localStorage.setItem('theme', 'dark');
+        } else {
+            document.body.classList.remove('dark-theme');
+            localStorage.setItem('theme', 'light');
+        }
+    });
+
+    // When clicking avatar file upload, show loading state implicitly by waiting for reload
+    document.getElementById('avatar-upload').addEventListener('change', function() {
+        if(this.files && this.files[0]) {
+            // Can add a loading spinner over image here if needed
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard-overview glass-panel" style="background:transparent; border:none; box-shadow:none;">
+    <!-- Smart Insights Section -->
+    {% if insights %}
+    <div class="insights-container">
+        {% for insight in insights %}
+        <div class="insight-box {{ insight.type }} glass-panel">
+            <i class="fa-solid {{ insight.icon }}"></i>
+            <div>
+                <strong>Smart Insight:</strong> {{ insight.message }}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Summary Cards -->
+    <div class="summary-cards">
+        <div class="card summary-card info glass-panel" style="border-left: 4px solid var(--info);">
+            <div class="card-icon">
+                <i class="fa-solid fa-calendar-day"></i>
+            </div>
+            <div class="card-details">
+                <h3>Today's Expenses</h3>
+                <h2 class="amount text-danger">₹<span class="animate-number" data-target="{{ total_today }}">0.00</span></h2>
+            </div>
+        </div>
+
+        <div class="card summary-card primary glass-panel" style="border-left: 4px solid var(--primary);">
+            <div class="card-icon">
+                <i class="fa-solid fa-wallet"></i>
+            </div>
+            <div class="card-details">
+                <h3>This Month's Expenses</h3>
+                <h2 class="amount text-danger">₹<span class="animate-number" data-target="{{ total_expenses_month }}">0.00</span></h2>
+            </div>
+        </div>
+
+        <div class="card summary-card success glass-panel" style="border-left: 4px solid var(--success);">
+            <div class="card-icon">
+                <i class="fa-solid fa-money-bill-trend-up"></i>
+            </div>
+            <div class="card-details">
+                <h3>Total Expenses (All Time)</h3>
+                <h2 class="amount text-danger">₹<span class="animate-number" data-target="{{ total_expenses_all }}">0.00</span></h2>
+            </div>
+        </div>
+        
+        <div class="card summary-card info glass-panel" style="border-left: 4px solid var(--warning);">
+            <div class="card-icon">
+                <i class="fa-solid fa-list-check"></i>
+            </div>
+            <div class="card-details">
+                <h3>Total Transactions</h3>
+                <h2><span class="animate-number" data-target="{{ total_transactions }}">0</span></h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions & Recent Transactions -->
+    <div class="dashboard-grid">
+        <div class="card recent-transactions glass-panel">
+            <div class="card-header-flex">
+                <h3>Recent Transactions</h3>
+                <a href="{{ url_for('expenses') }}" class="btn btn-sm btn-outline">View All</a>
+            </div>
+            
+            {% if recent_expenses %}
+            <div class="table-responsive">
+                <table class="data-table transactions-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Category</th>
+                            <th style="text-align: right;">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for expense in recent_expenses %}
+                        <tr>
+                            <td>{{ expense.date.strftime('%Y-%m-%d') }}</td>
+                            <td>{{ expense.description }}</td>
+                            <td><span class="badge-category {{ expense.category.lower().split()[0] }}"><i class="fa-solid fa-tag"></i> {{ expense.category }}</span></td>
+                            <td class="amount fw-bold text-danger" style="text-align: right;">-₹{{ "%.2f"|format(expense.amount) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="fa-regular fa-folder-open fa-3x"></i>
+                <p>No recent transactions found.</p>
+                <a href="{{ url_for('add_expense') }}" class="btn btn-primary mt-2">Add First Expense</a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Quick Add Expense Form -->
+        <div class="card quick-add glass-panel">
+            <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px;">
+                <i class="fa-solid fa-bolt" style="color: var(--warning);"></i> Quick Add
+            </h3>
+            <form action="{{ url_for('add_expense') }}" method="POST" class="styled-form" onsubmit="document.getElementById('quick-add-btn').innerHTML='<i class=\'fa-solid fa-spinner fa-spin\'></i> Adding...'">
+                <div class="form-group">
+                    <label for="amount">Amount (₹)</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-indian-rupee-sign"></i>
+                        <input type="number" id="quick-amount" name="amount" min="1" step="0.01" required placeholder="e.g. 500">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="category">Category</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-layer-group"></i>
+                        <select id="quick-category" name="category" required>
+                            <option value="Food">Food & Dining</option>
+                            <option value="Travel">Travel & Transport</option>
+                            <option value="Books">Books & Supplies</option>
+                            <option value="Entertainment">Entertainment</option>
+                            <option value="Shopping">Shopping</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="date">Date</label>
+                    <div class="input-wrapper">
+                        <i class="fa-regular fa-calendar"></i>
+                        <input type="date" id="quick-date" name="date" required value="{{ current_date }}">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="description">Short Description</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-pen"></i>
+                        <input type="text" id="quick-desc" name="description" required placeholder="What was this for?" maxlength="100">
+                    </div>
+                </div>
+                <button type="submit" id="quick-add-btn" class="btn btn-gradient btn-block mt-3">
+                    <i class="fa-solid fa-plus"></i> Add Expense
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

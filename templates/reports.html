@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block page_title %}Analytics & Reports{% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="reports-header mb-2" style="display:flex; justify-content:space-between; align-items:center;">
+    <h3 style="color:var(--text-muted)">Visual Insights</h3>
+    <div style="display:flex; gap: 10px;">
+        <select id="chartFilter" class="form-control" style="width:150px;" onchange="loadCharts()">
+            <option value="monthly" selected>Monthly View</option>
+            <option value="weekly">Weekly View</option>
+            <option value="daily">Daily View</option>
+        </select>
+        <a href="{{ url_for('export_csv') }}" class="btn btn-primary"><i class="fa-solid fa-download"></i> Export CSV</a>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<div class="charts-grid">
+    <!-- Pie Chart Card -->
+    <div class="card">
+        <h3>Category-wise Spending</h3>
+        <div class="chart-container" id="pie-container">
+            <canvas id="categoryPieChart"></canvas>
+            <div id="pie-fallback" class="empty-state" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:100%;">
+                <p>No data available</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bar Chart Card -->
+    <div class="card">
+        <h3>Monthly Spending Trends</h3>
+        <div class="chart-container" id="bar-container">
+            <canvas id="monthlyBarChart"></canvas>
+            <div id="bar-fallback" class="empty-state" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:100%;">
+                <p>No data available</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Data table summary -->
+<div class="card">
+    <h3>Monthly Summary</h3>
+    {% if monthly_summary %}
+    <div class="table-responsive mt-2">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Month</th>
+                    <th>Total Expenses (₹)</th>
+                    <th>Top Category</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in monthly_summary %}
+                <tr>
+                    <td>{{ row.month }}</td>
+                    <td class="amount fw-bold text-danger">₹{{ "%.2f"|format(row.total) }}</td>
+                    <td><span class="badge">{{ row.top_category or 'N/A' }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state mt-2">
+        <p>No monthly data generated yet.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let pieChartInstance = null;
+    let barChartInstance = null;
+
+    function loadCharts() {
+        const filterVal = document.getElementById('chartFilter').value;
+        const containerPie = document.getElementById('categoryPieChart');
+        const containerBar = document.getElementById('monthlyBarChart');
+        const fallbackPie = document.getElementById('pie-fallback');
+        const fallbackBar = document.getElementById('bar-fallback');
+        
+        containerPie.style.opacity = '0.5';
+        containerBar.style.opacity = '0.5';
+
+        fetch(`/api/chart-data?filter=${filterVal}`)
+            .then(response => response.json())
+            .then(data => {
+                containerPie.style.opacity = '1';
+                containerBar.style.opacity = '1';
+
+                // Pie Chart Configuration
+                if (data.pie_labels.length > 0 && data.pie_values.length > 0) {
+                    containerPie.style.display = 'block';
+                    fallbackPie.style.display = 'none';
+                    if (pieChartInstance) pieChartInstance.destroy();
+                    
+                    const ctxPie = containerPie.getContext('2d');
+                    pieChartInstance = new Chart(ctxPie, {
+                        type: 'doughnut', // using doughnut for a modern look
+                        data: {
+                            labels: data.pie_labels,
+                            datasets: [{
+                                data: data.pie_values,
+                                backgroundColor: ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#0ea5e9', '#64748b'],
+                                borderWidth: 0,
+                                hoverOffset: 8
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { position: 'right', labels: { color: 'var(--text-main)' } }
+                            }
+                        }
+                    });
+                } else {
+                    containerPie.style.display = 'none';
+                    fallbackPie.style.display = 'block';
+                }
+
+                // Bar Chart Configuration
+                if (data.bar_labels.length > 0 && data.bar_values.length > 0) {
+                    containerBar.style.display = 'block';
+                    fallbackBar.style.display = 'none';
+                    if (barChartInstance) barChartInstance.destroy();
+
+                    const ctxBar = containerBar.getContext('2d');
+                    barChartInstance = new Chart(ctxBar, {
+                        type: 'bar',
+                        data: {
+                            labels: data.bar_labels,
+                            datasets: [{
+                                label: 'Total Spent (₹)',
+                                data: data.bar_values,
+                                backgroundColor: 'rgba(79, 70, 229, 0.8)',
+                                hoverBackgroundColor: '#4f46e5',
+                                borderRadius: 8
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: { beginAtZero: true, grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: 'var(--text-muted)' } },
+                                x: { grid: { display: false }, ticks: { color: 'var(--text-muted)' } }
+                            },
+                            plugins: {
+                                legend: { display: false }
+                            }
+                        }
+                    });
+                } else {
+                    containerBar.style.display = 'none';
+                    fallbackBar.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error("Error fetching chart data:", error);
+                containerPie.style.opacity = '1';
+                containerBar.style.opacity = '1';
+            });
+    }
+
+    // Load charts initially
+    document.addEventListener("DOMContentLoaded", loadCharts);
+</script>
+{% endblock %}

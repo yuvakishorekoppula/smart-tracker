@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block auth_content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <div class="auth-logo">
+                <i class="fa-solid fa-wallet fa-2x"></i>
+            </div>
+            <h2>Smart Expense Tracker</h2>
+            <p>Built for Students</p>
+        </div>
+
+        {% if view == 'login' %}
+        <!-- Login Form -->
+        <form action="{{ url_for('login') }}" method="POST" class="auth-form">
+            <div class="input-group">
+                <label for="identifier">Name or Phone Number</label>
+                <div class="input-wrapper">
+                    <i class="fa-solid fa-user"></i>
+                    <input type="text" id="identifier" name="identifier" required placeholder="Enter your name or phone number">
+                </div>
+            </div>
+            <div class="input-group">
+                <label for="password">Password</label>
+                <div class="input-wrapper">
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="password" id="password" name="password" required placeholder="Enter password">
+                </div>
+            </div>
+            <div class="form-actions">
+                <a href="{{ url_for('forgot_password') }}" class="forgot-link">Forgot Password?</a>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Log In</button>
+            <p class="switch-auth">Don't have an account? <a href="{{ url_for('register') }}">Register here</a>.</p>
+        </form>
+
+        {% elif view == 'register' %}
+        <!-- Register Form -->
+        <form action="{{ url_for('register') }}" method="POST" class="auth-form">
+            <div class="input-group">
+                <label for="name">Full Name</label>
+                <div class="input-wrapper">
+                    <i class="fa-solid fa-user"></i>
+                    <input type="text" id="name" name="name" required placeholder="John Doe">
+                </div>
+            </div>
+            <div class="input-group">
+                <label for="email">Email Address</label>
+                <div class="input-wrapper">
+                    <i class="fa-solid fa-envelope"></i>
+                    <input type="email" id="email" name="email" required placeholder="student@college.edu">
+                </div>
+            </div>
+            <div class="input-group">
+                <label for="phone">Phone Number</label>
+                <div class="input-wrapper">
+                    <i class="fa-solid fa-phone"></i>
+                    <input type="tel" id="phone" name="phone" required placeholder="10-digit number" pattern="[0-9]{10}">
+                </div>
+            </div>
+            <div class="input-group">
+                <label for="password">Password</label>
+                <div class="input-wrapper">
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="password" id="password" name="password" required placeholder="Create a strong password">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Register Account</button>
+            <p class="switch-auth">Already have an account? <a href="{{ url_for('login') }}">Log in</a>.</p>
+        </form>
+
+        {% elif view == 'forgot-password' %}
+        <!-- Forgot Password Form -->
+        <form action="{{ url_for('forgot_password') }}" method="POST" class="auth-form">
+            <p class="form-info">Enter your registered name or phone number to receive a verification code.</p>
+            <div class="input-group">
+                <label for="identifier">Name or Phone Number</label>
+                <div class="input-wrapper">
+                    <i class="fa-solid fa-user"></i>
+                    <input type="text" id="identifier" name="identifier" required placeholder="Enter registered name or phone">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Send OTP</button>
+            <p class="switch-auth"><a href="{{ url_for('login') }}">Back to Login</a></p>
+        </form>
+
+        {% elif view == 'verify-otp' %}
+        <!-- Verify OTP Form -->
+        <form action="{{ url_for('verify_otp') }}" method="POST" class="auth-form">
+            <p class="form-info">Enter the 6-digit code sent to your phone. Valid for 5 minutes.</p>
+            <div class="input-group">
+                <label for="otp">Security Code (OTP)</label>
+                <div class="input-wrapper">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <input type="text" id="otp" name="otp" required placeholder="123456" maxlength="6">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Verify Code</button>
+            <p class="switch-auth">Didn't receive it? <a href="{{ url_for('resend_otp') }}">Resend OTP</a></p>
+        </form>
+
+        {% elif view == 'reset-password' %}
+        <!-- Reset Password Form -->
+        <form action="{{ url_for('reset_password') }}" method="POST" class="auth-form">
+            <p class="form-info">Create a new password for your account.</p>
+            <div class="input-group">
+                <label for="password">New Password</label>
+                <div class="input-wrapper">
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="password" id="password" name="password" required placeholder="Enter new password">
+                </div>
+            </div>
+            <div class="input-group">
+                <label for="confirm_password">Confirm Password</label>
+                <div class="input-wrapper">
+                    <i class="fa-solid fa-lock-check"></i>
+                    <input type="password" id="confirm_password" name="confirm_password" required placeholder="Confirm new password">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Reset Password</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

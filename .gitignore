@@ -1,0 +1,23 @@
+# Environments
+.env
+.idea/
+.vscode/
+
+# Python Virtual Environments
+venv/
+env/
+.venv/
+
+# Caches
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Local Databases (if switched to SQLite)
+*.sqlite3
+instance/
+
+# OS Temp Files
+.DS_Store
+Thumbs.db

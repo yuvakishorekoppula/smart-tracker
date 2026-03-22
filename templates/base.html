@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Expense Tracker</title>
+    <!-- Modern Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block head %}{% endblock %}
+</head>
+<body>
+
+    {% if session.get('user_id') %}
+    <!-- Main App Layout with Sidebar -->
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fa-solid fa-wallet"></i> SmartExp</h2>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="{{ url_for('index') }}" class="nav-item {% if request.endpoint == 'index' %}active{% endif %}">
+                    <i class="fa-solid fa-chart-pie"></i> Dashboard
+                </a>
+                <a href="/expenses" class="nav-item">
+                    <i class="fa-solid fa-receipt"></i> Expenses
+                </a>
+                <a href="/reports" class="nav-item">
+                    <i class="fa-solid fa-file-invoice"></i> Reports
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <a href="{{ url_for('logout') }}" class="nav-item logout-btn">
+                    <i class="fa-solid fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Top Header -->
+            <header class="top-header">
+                <div class="header-title">
+                    <h1>{% block page_title %}Dashboard{% endblock %}</h1>
+                </div>
+                <div class="header-user">
+                    <button id="theme-toggle-btn" class="theme-toggle" aria-label="Toggle Theme" style="background:none;border:none;cursor:pointer;font-size:1.2rem;margin-right:15px;color:var(--text-muted);">
+                        <i class="fa-solid fa-moon"></i>
+                    </button>
+                    <span>Welcome, <strong id="header-user-name">{{ current_user.name if current_user else session.get('user_name', 'Student') }}</strong></span>
+                    <div class="user-avatar-container" style="position: relative; margin-left:15px;">
+                        <button id="profile-dropdown-btn" class="user-avatar" style="background:none;border:none;cursor:pointer;padding:0;">
+                            {% if current_user and current_user.profile_picture and current_user.profile_picture != 'default_avatar.png' %}
+                                <img src="{{ url_for('static', filename='uploads/profiles/' + current_user.profile_picture) }}" alt="Profile" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-color);">
+                            {% else %}
+                                <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--primary-color); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                                    <i class="fa-solid fa-user"></i>
+                                </div>
+                            {% endif %}
+                        </button>
+                        <div id="profile-dropdown-menu" class="dropdown-menu" style="display: none; position: absolute; right: 0; top: 120%; background: var(--card-bg); backdrop-filter: var(--glass-blur); box-shadow: 0 4px 15px rgba(0,0,0,0.15); border-radius: 12px; width: 230px; z-index: 1000; border: 1px solid var(--card-border); overflow: hidden;">
+                            <div style="padding: 15px; border-bottom: 1px solid var(--card-border); background: rgba(128, 128, 128, 0.05);">
+                                <h4 style="margin: 0; font-size: 1rem; color: var(--text-color);">{{ current_user.name if current_user else session.get('user_name', '') }}</h4>
+                                <p style="margin: 5px 0 0 0; font-size: 0.8rem; color: var(--text-muted); word-break: break-all;">{{ current_user.email if current_user else '' }}</p>
+                            </div>
+                            <div style="padding: 5px 0;">
+                                <a href="{{ url_for('profile') }}" class="dropdown-item"><i class="fa-solid fa-user-circle"></i> My Profile</a>
+                                <a href="{{ url_for('profile') }}" class="dropdown-item"><i class="fa-solid fa-cog"></i> Settings</a>
+                                <div style="border-top: 1px solid var(--card-border); margin: 5px 0;"></div>
+                                <a href="{{ url_for('logout') }}" class="dropdown-item text-danger"><i class="fa-solid fa-sign-out-alt"></i> Logout</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Alerts / Flashes -->
+            <div class="flash-messages">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }}">
+                                {{ message }}
+                                <span class="close-btn" onclick="this.parentElement.style.display='none';">&times;</span>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+            </div>
+
+            <!-- Page Content -->
+            <div class="content-wrapper">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+    {% else %}
+    <!-- Auth Layout -->
+    <div class="auth-layout">
+        <div class="flash-messages auth-flashes">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            {{ message }}
+                            <span class="close-btn" onclick="this.parentElement.style.display='none';">&times;</span>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+        {% block auth_content %}{% endblock %}
+    </div>
+    {% endif %}
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
